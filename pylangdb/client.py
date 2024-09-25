@@ -4,7 +4,7 @@ import json
 import urllib3
 import pandas as pd
 
-from pylangdb.types import MessageRequest
+from pylangdb.types import MessageRequest, CreateModelRequest, CreatePromptRequest
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_SERVER_URL = "https://api.dev.langdb.ai"
@@ -25,10 +25,11 @@ class LangDb:
 
     """
 
-    def __init__(self, client_id: str, client_secret: str, server_url: str = None):
+    def __init__(self, client_id: str, client_secret: str, project_id: str, server_url: str = None):
         self.client_id = client_id
         self.client_secret = client_secret
         self.server_url = server_url or DEFAULT_SERVER_URL
+        self.project_id = project_id
 
     def get_access_token(self) -> str:
         """
@@ -75,6 +76,7 @@ class LangDb:
         access_token = self.get_access_token()
         if access_token:
             headers["Authorization"] = f"Bearer {access_token}"
+            headers["X-Project-Id"] = f"{self.project_id}"
         
         url = f"{self.server_url}/{entity_name}"
         response = requests.post(url, headers=headers, data=json.dumps({}))
@@ -148,6 +150,7 @@ class LangDb:
         access_token = self.get_access_token()
         if access_token:
             headers["Authorization"] = f"Bearer {access_token}"
+            headers["X-Project-Id"] = f"{self.project_id}"
 
         execute_request = {
             "query": query,
@@ -177,7 +180,8 @@ class LangDb:
         access_token = self.get_access_token()
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}"
+            "Authorization": f"Bearer {access_token}",
+            "X-Project-id": f"{self.project_id}"
         }
 
         url = f"{self.server_url}/views/execute"
@@ -206,7 +210,8 @@ class LangDb:
         access_token = self.get_access_token()
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}"
+            "Authorization": f"Bearer {access_token}",
+            "X-Project-id": f"{self.project_id}"
         }
 
         # Check if message is a string or a list and print appropriate info
@@ -230,3 +235,85 @@ class LangDb:
         message = response.text
         response_headers = response.headers
         return message
+    
+    def create_query(self, query: str):
+        """
+        Execute a query and return the result as a dictionary.
+
+        Args:
+            query (str): The query to execute.
+            params (dict, optional): The parameters for the query. Defaults to None.
+
+        Returns:
+            dict: The result of the query as a dictionary.
+
+        """
+
+        headers = {"Content-Type": "application/json"}
+
+
+        access_token = self.get_access_token()
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+            headers["X-Project-Id"] = f"{self.project_id}"
+
+        execute_request = {
+            "query": query
+        }
+        url = f"{self.server_url}/query"
+        response = requests.post(url, headers=headers, data=json.dumps(execute_request))
+        
+        if response.status_code > 299:
+            text = response.text or "Failed to send message to the server"
+            print("RESPONSE ERROR", text)
+
+            return response.json()
+    
+    def create_model(self, request: CreateModelRequest) -> str:
+        """
+        Create a model with the given request and return the result as a string.
+
+        Args:
+            request (Model): The request to create the model.
+
+        Returns:
+            str: The result of the model creation as a string.
+
+        """
+
+        query = f"""
+        CREATE MODEL {request.name} (
+            request.input = {{
+                {input.arg}
+            }}
+        ) 
+        USING {request.provider}(model_name= {request.model_name})
+        PROMPT {{request.prompt}}
+        """
+
+        # Call the query function with the constructed query
+        self.create_query(query)
+    
+
+    def create_prompt(self, request: CreatePromptRequest) -> str:
+        """
+        Create a prompt with the given request and return the result as a string.
+
+        Args:
+            request (Model): The request to create the prompt.
+
+        Returns:
+            str: The result of the prompt creation as a string.
+
+        """
+
+        query = f"""
+        CREATE PROMPT {request.name} (
+          system  "{request.system_message}", 
+          human "{request.human_message}"
+        )
+        """
+
+        # Call the query function with the constructed query 
+        self.create_query(query)
+    

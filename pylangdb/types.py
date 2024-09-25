@@ -61,3 +61,19 @@ class Model:
     provider_name: str
     model_params: Dict[str, Any] = field(default_factory=dict)    
     tools: List[Tool] = field(default_factory=list)
+
+@dataclass
+class CreateModelRequest:
+    name: str
+    description: Optional[str] = None
+    input_arg: str
+    provider: str
+    model_name: str
+    prompt: str
+    tools: List[Tool] = field(default_factory=list)    
+
+@dataclass
+class CreatePromptRequest:
+    name: str
+    system_message: str
+    human_message: str
