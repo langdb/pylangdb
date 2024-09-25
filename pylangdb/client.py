@@ -7,7 +7,7 @@ import pandas as pd
 from pylangdb.types import MessageRequest
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-DEFAULT_SERVER_URL = "https://api.dev.langdb.ai"
+DEFAULT_SERVER_URL = "https://api.us-east-1.langdb.ai"
 
 class LangDb:
     """
