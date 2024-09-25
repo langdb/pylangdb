@@ -65,7 +65,6 @@ class Model:
 @dataclass
 class CreateModelRequest:
     name: str
-    description: Optional[str] = None
     input_arg: str
     provider: str
     model_name: str

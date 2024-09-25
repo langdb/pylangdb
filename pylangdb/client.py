@@ -7,7 +7,7 @@ import pandas as pd
 from pylangdb.types import MessageRequest, CreateModelRequest, CreatePromptRequest
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-DEFAULT_SERVER_URL = "https://api.dev.langdb.ai"
+DEFAULT_SERVER_URL = "https://api.us-east-1.langdb.ai"
 
 def custom_json_encoder(obj):
     if isinstance(obj, set):
@@ -16,8 +16,7 @@ def custom_json_encoder(obj):
 
 def escape_string(s):
     return json.dumps(s, default=custom_json_encoder)[1:-1] 
-
-
+    
 class LangDb:
     """
     A client for interacting with the LangDb server.
@@ -234,16 +233,18 @@ class LangDb:
 
         # Make the POST request
         url = f"{self.server_url}/invoke"
+
         response = requests.post(url, headers=headers, data=json.dumps(request_dict))
 
         if response.status_code > 299:
             text = response.text or "Failed to send message to the server"
             print("RESPONSE ERROR", text)
             raise Exception(text or f"{response.status_code}: {text}")
-
+        
         message = response.text
         response_headers = response.headers
         return message
+    
     
     def create_query(self, query: str):
         """

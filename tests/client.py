@@ -9,10 +9,11 @@ class TestLangDb(unittest.TestCase):
         # Set environment variables
         cls.client_id = os.getenv('LANGDB_CLIENT_ID')
         cls.client_secret = os.getenv('LANGDB_CLIENT_SECRET')
+        cls.project_id = os.getenv('PROJECT_ID')
 
     def setUp(self):
         # Initialize LangDb instance
-        self.langdb = LangDb(self.client_id, self.client_secret)
+        self.langdb = LangDb(self.client_id, self.client_secret, self.project_id)
 
     def test_query_df(self):
         # Test the query_df method
