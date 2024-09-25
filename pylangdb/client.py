@@ -9,6 +9,15 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_SERVER_URL = "https://api.dev.langdb.ai"
 
+def custom_json_encoder(obj):
+    if isinstance(obj, set):
+        return list(obj)
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+def escape_string(s):
+    return json.dumps(s, default=custom_json_encoder)[1:-1] 
+
+
 class LangDb:
     """
     A client for interacting with the LangDb server.
@@ -281,15 +290,7 @@ class LangDb:
 
         """
 
-        query = f"""
-        CREATE MODEL {request.name} (
-            request.input = {{
-                {input.arg}
-            }}
-        ) 
-        USING {request.provider}(model_name= {request.model_name})
-        PROMPT {{request.prompt}}
-        """
+        query = f"CREATE MODEL {request.name} ( {request.input_arg} )  USING {request.provider}(model_name= '{request.model_name}') PROMPT {request.prompt}"
 
         # Call the query function with the constructed query
         self.create_query(query)
@@ -306,14 +307,9 @@ class LangDb:
             str: The result of the prompt creation as a string.
 
         """
-
-        query = f"""
-        CREATE PROMPT {request.name} (
-          system  "{request.system_message}", 
-          human "{request.human_message}"
-        )
-        """
-
+        escaped_system_message = escape_string(request.system_message)
+        escaped_human_message = escape_string(request.human_message)
+        query = f"CREATE PROMPT {request.name} ( system  '{request.system_message}',  human '{request.human_message}')"
         # Call the query function with the constructed query 
         self.create_query(query)
     
