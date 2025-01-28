@@ -1,10 +1,12 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import requests
 import json
 import urllib3
 import pandas as pd
-
-from pylangdb.types import MessageRequest
+import time
+from os import getenv
+from openai import OpenAI
+from pylangdb.types import MessageRequest, Message, ThreadCost
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_SERVER_URL = "https://api.us-east-1.langdb.ai"
@@ -25,208 +27,146 @@ class LangDb:
 
     """
 
-    def __init__(self, client_id: str, client_secret: str, server_url: str = None):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.server_url = server_url or DEFAULT_SERVER_URL
-
-    def get_access_token(self) -> str:
-        """
-        Get the access token for authentication.
-
-        Returns:
-            str: The access token.
-
-        Raises:
-            Exception: If there is an error in getting the access token.
-
-        """
-        url = f"{self.server_url}/oauth2/token"
-        payload = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret
-        }
-        headers = {"Content-Type": "application/json"}
-
-        response = requests.post(url, data=json.dumps(payload), headers=headers)
-        if response.status_code > 299:
-            text = response.text or "Failed to send message to the server"
-            print("getAccessToken: RESPONSE ERROR", text)
-            raise Exception(text)
+    def __init__(self, api_key: str, project_id: str | None = None):
+        self.api_key = api_key
+        self.project_id = project_id
+        if project_id:
+            api_base = f"https://api.us-east-1.langdb.ai/{project_id}/v1"
         else:
-            data = response.json()
-            return data.get("access_token")
+            api_base = "https://api.us-east-1.langdb.ai/v1"
 
-    def get_entities(self, entity_name: str) -> list:
+        self.client = OpenAI(api_key=api_key, api_base=api_base)
+
+    def completion(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        headers: Any = None,
+        extra_body: Any = None,
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+    ):
+        response = self.client.chat.completions.create(
+            model=model,  # Use the model
+            messages=messages,  # Define the interaction
+            temperature=temperature,  # Control the creativity of the response
+            max_tokens=max_tokens,  # Limit the length of the response
+            extra_headers=headers,
+            extra_body=extra_body,
+        )   
+        return response.choices[0].message.content.strip()
+
+    def get_analytics(self, tags: str, start_time_us: int | None = None, end_time_us: int | None = None) -> List[Dict[str, Any]]:
         """
-        Get the entities for a given entity name.
+        Fetch analytics data from /analytics/summary with the specified project_id and tags.
 
-        Args:
-            entity_name (str): The name of the entity.
-
-        Returns:
-            list: The list of entities.
-
-        Raises:
-            Exception: If there is an error in getting the entities.
-
+        :param tags: A comma-separated (or otherwise delimited) list of tags.
+        :param start_time_us: Start time in microseconds. Defaults to 24 hours before end_time_us.
+        :param end_time_us: End time in microseconds. Defaults to current time.
+        :return: A list of dictionaries containing analytics data.
         """
-        headers = {"Content-Type": "application/json"}
-        access_token = self.get_access_token()
-        if access_token:
-            headers["Authorization"] = f"Bearer {access_token}"
+        if not self.project_id:
+            raise ValueError("project_id is required for analytics operations")
+
+        url = f"{DEFAULT_SERVER_URL}/analytics/summary"
         
-        url = f"{self.server_url}/{entity_name}"
-        response = requests.post(url, headers=headers, data=json.dumps({}))
+        # Set default end time to current time if not provided
+        if end_time_us is None:
+            end_time_us = int(time.time() * 1_000_000)
         
-        if response.status_code > 299:
-            text = response.text or "Failed to send message to the server"
-            print("RESPONSE ERROR", text)
-            raise Exception(text or f"{response.status_code}: {text}")
-
-        return response.json()
-
-    def query_df(self, query: str, params: dict = None) -> pd.DataFrame:
-        """
-        Execute a query and return the result as a pandas DataFrame.
-
-        Args:
-            query (str): The query to execute.
-            params (dict, optional): The parameters for the query. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The result of the query as a pandas DataFrame.
-
-        """
-        res = self.query(query, params)
-        data = res.get('data', [])
-        df = pd.DataFrame(data)        
-        return df
-
-    def query_with_trace_id(self, trace_id: str) -> dict:
-        """
-        Execute a query with a trace ID and return the result as a dictionary.
-
-        Args:
-            trace_id (str): The trace ID.
-
-        Returns:
-            dict: The result of the query as a dictionary.
-
-        """
-        query = f"""
-        SELECT 
-            operation_name,
-            attribute['model'] AS model,
-            JSONExtractInt(attribute['usage'], 'prompt_tokens') AS prompt_tokens,
-            JSONExtractInt(attribute['usage'], 'completion_tokens') AS completion_tokens,
-            JSONExtractInt(attribute['usage'], 'total_tokens') AS total_tokens,
-            start_time_us,
-            finish_time_us
-        FROM langdb.traces 
-        WHERE trace_id = '{trace_id}'
-        ORDER BY start_time_us DESC 
-        LIMIT 10
-        """
-
-        # Call the query function with the constructed query
-        return self.query_df(query)    
+        # Set default start time to 24 hours before end time if not provided
+        if start_time_us is None:
+            start_time_us = end_time_us - (24 * 60 * 60 * 1_000_000)  # 24 hours earlier
         
-    def query(self, query: str, params: dict = None) -> dict:
-        """
-        Execute a query and return the result as a dictionary.
-
-        Args:
-            query (str): The query to execute.
-            params (dict, optional): The parameters for the query. Defaults to None.
-
-        Returns:
-            dict: The result of the query as a dictionary.
-
-        """
-        headers = {"Content-Type": "application/json"}
-        access_token = self.get_access_token()
-        if access_token:
-            headers["Authorization"] = f"Bearer {access_token}"
-
-        execute_request = {
-            "query": query,
-            "params": params or {}
+        # Prepare the JSON payload
+        payload = {
+            "start_time_us": start_time_us,
+            "end_time_us": end_time_us,
+            "groupBy": ["tag"],
+            "tag_keys": [tags]
         }
-        url = f"{self.server_url}/query"
-        response = requests.post(url, headers=headers, data=json.dumps(execute_request))
-        
-        if response.status_code > 299:
-            text = response.text or "Failed to send message to the server"
-            print("RESPONSE ERROR", text)
-            raise Exception(text or f"{response.status_code}: {text}")
-
-        return response.json()
-
-    def execute_view(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute a view with the given parameters and return the result as a dictionary.
-
-        Args:
-            params (Dict[str, Any]): The parameters for the view.
-
-        Returns:
-            Dict[str, Any]: The result of the view as a dictionary.
-
-        """
-        access_token = self.get_access_token()
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}"
+            "x-project-id": self.project_id,
+            "Authorization": f"Bearer {self.api_key}"
         }
-
-        url = f"{self.server_url}/views/execute"
-        response = requests.post(url, headers=headers, data=json.dumps(params))
-
-        if response.status_code > 299:
-            text = response.text or "Failed to send message to the server"
-            print("RESPONSE ERROR", text)
-            raise Exception(text or f"{response.status_code}: {text}")
-
-        data = response.json()    
-        df = pd.DataFrame(data)
-        return df
-
-    def invoke_model(self, request: MessageRequest) -> str:
-        """
-        Invoke a model with the given request and return the result as a string.
-
-        Args:
-            request (MessageRequest): The request to invoke the model.
-
-        Returns:
-            str: The result of the model invocation as a string.
-
-        """
-        access_token = self.get_access_token()
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}"
-        }
-
-        # Check if message is a string or a list and print appropriate info
-        message_info = (
-            f"Message: {request.message}" if isinstance(request.message, str) 
-            else f"Images: {len(request.message)}"
-        )
-
-        # Convert the dataclass to a dictionary for JSON serialization
-        request_dict = request.__dict__
-
         # Make the POST request
-        url = f"{self.server_url}/invoke"
-        response = requests.post(url, headers=headers, data=json.dumps(request_dict))
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        # Return the JSON response
+        return response.json()
 
-        if response.status_code > 299:
-            text = response.text or "Failed to send message to the server"
-            print("RESPONSE ERROR", text)
-            raise Exception(text or f"{response.status_code}: {text}")
+    def get_analytics_dataframe(self, tags: str, start_time_us: int | None = None, end_time_us: int | None = None) -> pd.DataFrame:
+        """
+        Calls get_analytics() and converts the returned 'summary' data into a Pandas DataFrame,
+        with each row corresponding to one entry in the 'summary' list.
 
-        message = response.text
-        response_headers = response.headers
-        return message
+        :param tags: A comma-separated list of tags (e.g. "gpt-4,claude").
+        :param start_time_us: Start time in microseconds. Defaults to 24 hours before end_time_us.
+        :param end_time_us: End time in microseconds. Defaults to current time.
+        :return: A Pandas DataFrame where each row is a summary record. 
+                The 'tag_tuple' is flattened into a 'tag' column.
+        """
+        raw_json = self.get_analytics(tags, start_time_us, end_time_us)
+        summary_list = raw_json.get("summary", [])
+
+        df = pd.DataFrame(summary_list)
+
+        if not df.empty:
+            def clean_tag_tuple(tag_tuple):
+                if isinstance(tag_tuple, list):
+                    flat_list = [item for sublist in tag_tuple for item in (sublist if isinstance(sublist, list) else [sublist])]
+                    cleaned_list = [item for item in flat_list if item not in (None, '')]
+                    return cleaned_list if cleaned_list else None
+                return None
+
+            df["tag_tuple"] = df["tag_tuple"].apply(clean_tag_tuple)
+            df = df[df["tag_tuple"].notnull()]
+
+        return df
+
+    def get_messages(self, thread_id: str) -> List[Message]:
+        """
+        Fetch messages for a specific thread using its ID.
+
+        :param thread_id: The ID of the thread to fetch messages for.
+        :return: A list of Message objects associated with the thread.
+        """
+        if not self.project_id:
+            raise ValueError("project_id is required for thread operations")
+
+        url = f"{DEFAULT_SERVER_URL}/threads/{thread_id}/messages"
+        
+        headers = {
+            "x-project-id": self.project_id,
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        return [Message.from_dict(msg) for msg in data]
+
+    def get_cost(self, thread_id: str) -> ThreadCost:
+        """
+        Get the cost information for a specific thread.
+
+        :param thread_id: The ID of the thread to get cost for.
+        :return: A ThreadCost object containing cost and token usage information.
+        """
+        if not self.project_id:
+            raise ValueError("project_id is required for thread operations")
+
+        url = f"{DEFAULT_SERVER_URL}/threads/{thread_id}/cost"
+        
+        headers = {
+            "x-project-id": self.project_id,
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        return ThreadCost.from_dict(data)

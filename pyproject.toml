@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.10"
 pandas = "^2.2.2"
 requests = "^2.32.3"
+openai = "^1.60.2"
 
 
 [tool.poetry.group.dev.dependencies]
