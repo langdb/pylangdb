@@ -13,36 +13,54 @@ class TestLangDb(unittest.TestCase):
         # Set environment variables for testing
         cls.api_key = os.getenv("LANGDB_API_KEY")
         cls.project_id = os.getenv("LANGDB_PROJECT_ID")
-        cls.test_thread_id = os.getenv("LANGDB_TEST_THREAD_ID")
 
         # Skip tests if environment variables are not set
-        if not all([cls.api_key, cls.project_id, cls.test_thread_id]):
+        if not all([cls.api_key, cls.project_id]):
             raise unittest.SkipTest(
-                "LANGDB_API_KEY, LANGDB_PROJECT_ID, and LANGDB_TEST_THREAD_ID environment variables are required"
+                "LANGDB_API_KEY and LANGDB_PROJECT_ID environment variables are required"
             )
 
     def setUp(self):
         # Initialize LangDb instance
         self.client = LangDb(api_key=self.api_key, project_id=self.project_id)
-
-    def test_completion(self):
-        # Test the completion method
+        # Get thread_id from completion for subsequent tests
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Say hello!"},
         ]
         response = self.client.completion(
-            model="gemini-1.5-pro-latest",
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.7,
             max_tokens=100,
         )
-        self.assertIsInstance(response, str)
-        self.assertTrue(len(response) > 0)
+        self.thread_id = response["thread_id"]
+        self.assertIsInstance(response["thread_id"], str)
+        self.assertTrue(len(response["thread_id"]) > 0)
+
+    def test_completion(self):
+        # Test the completion method
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "How are you?"},
+        ]
+        response = self.client.completion(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=100,
+        )
+        self.assertIsInstance(response, dict)
+        self.assertIn("content", response)
+        self.assertIn("thread_id", response)
+        self.assertIsInstance(response["content"], str)
+        self.assertIsInstance(response["thread_id"], str)
+        self.assertTrue(len(response["content"]) > 0)
+        self.assertTrue(len(response["thread_id"]) > 0)
 
     def test_get_messages(self):
-        # Test the get_messages method
-        messages = self.client.get_messages(thread_id=self.test_thread_id)
+        # Test the get_messages method using thread_id from completion
+        messages = self.client.get_messages(thread_id=self.thread_id)
 
         # Check return type
         self.assertIsInstance(messages, list)
@@ -57,11 +75,11 @@ class TestLangDb(unittest.TestCase):
         self.assertIsInstance(first_message.created_at, str)
 
         # Check that thread_id matches
-        self.assertEqual(first_message.thread_id, self.test_thread_id)
+        self.assertEqual(first_message.thread_id, self.thread_id)
 
     def test_get_cost(self):
-        # Test the get_cost method
-        cost = self.client.get_cost(thread_id=self.test_thread_id)
+        # Test the get_cost method using thread_id from completion
+        cost = self.client.get_cost(thread_id=self.thread_id)
 
         # Check return type
         self.assertIsInstance(cost, ThreadCost)
