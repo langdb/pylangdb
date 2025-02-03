@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "pylangdb"
-version = "0.1.1"
+version = "0.2.0"
 description = ""
-authors = ["Vivek <vivek@langdb.ai>"]
+authors = ["Vivek <vivek@langdb.ai>", "Mrunmay <mrunmay@langdb.ai>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -11,7 +11,6 @@ pandas = "^2.2.2"
 requests = "^2.32.3"
 openai = "^1.60.2"
 python-dotenv = "^1.0.1"
-
 
 [tool.poetry.group.dev.dependencies]
 sphinx = "^8.0.2"
