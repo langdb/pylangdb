@@ -56,10 +56,10 @@ for message in messages:
 Get cost and token usage information for a thread:
 
 ```python
-cost = client.get_cost(thread_id="your_thread_id")
-print(f"Total cost: ${cost.total_cost:.4f}")
-print(f"Input tokens: {cost.total_input_tokens}")
-print(f"Output tokens: {cost.total_output_tokens}")
+usage = client.get_usage(thread_id="your_thread_id")
+print(f"Total cost: ${usage.total_cost:.4f}")
+print(f"Input tokens: {usage.total_input_tokens}")
+print(f"Output tokens: {usage.total_output_tokens}")
 ```
 
 ### Analytics
@@ -91,7 +91,6 @@ df = client.get_analytics_dataframe(
 ```bash
 LANGDB_API_KEY="your_api_key"
 LANGDB_PROJECT_ID="your_project_id"
-LANGDB_TEST_THREAD_ID="your_test_thread_id"  # Optional: for running tests
 ```
 
 ### Running Tests

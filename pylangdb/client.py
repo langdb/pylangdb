@@ -181,7 +181,7 @@ class LangDb:
         data = response.json()
         return [Message.from_dict(msg) for msg in data]
 
-    def get_cost(self, thread_id: str) -> ThreadCost:
+    def get_usage(self, thread_id: str) -> ThreadCost:
         """
         Get the cost information for a specific thread.
 
@@ -217,7 +217,7 @@ class LangDb:
             try:
                 # Get messages and cost for each thread
                 messages = self.get_messages(thread_id)
-                thread_cost = self.get_cost(thread_id)
+                thread_cost = self.get_usage(thread_id)
 
                 # Process messages for this thread
                 for msg in messages:
