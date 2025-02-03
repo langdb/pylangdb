@@ -50,13 +50,13 @@ class LangDb:
     ):
         if headers is None:
             headers = {}
-        
+
         # Set thread_id if not provided
         if thread_id is None:
             thread_id = str(uuid4())
-        
+
         headers["x-thread-id"] = thread_id
-        
+
         response = self.client.chat.completions.create(
             model=model,  # Use the model
             messages=messages,  # Define the interaction
@@ -67,7 +67,7 @@ class LangDb:
         )
         return {
             "content": response.choices[0].message.content.strip(),
-            "thread_id": thread_id
+            "thread_id": thread_id,
         }
 
     def get_analytics(
@@ -207,18 +207,18 @@ class LangDb:
     def create_evaluation_df(self, thread_ids: List[str]) -> pd.DataFrame:
         """
         Create a DataFrame containing messages and cost information for multiple threads.
-        
+
         :param thread_ids: List of thread IDs to analyze
         :return: DataFrame containing message details and associated costs for all threads
         """
         all_messages_data = []
-        
+
         for thread_id in thread_ids:
             try:
                 # Get messages and cost for each thread
                 messages = self.get_messages(thread_id)
                 thread_cost = self.get_cost(thread_id)
-                
+
                 # Process messages for this thread
                 for msg in messages:
                     message_data = {
@@ -231,27 +231,27 @@ class LangDb:
                         "user_id": msg.user_id,
                         "thread_total_cost": thread_cost.total_cost,
                         "thread_input_tokens": thread_cost.total_input_tokens,
-                        "thread_output_tokens": thread_cost.total_output_tokens
+                        "thread_output_tokens": thread_cost.total_output_tokens,
                     }
                     all_messages_data.append(message_data)
             except Exception as e:
                 print(f"Error processing thread {thread_id}: {str(e)}")
                 continue
-            
+
         # Create DataFrame from all collected data
         df = pd.DataFrame(all_messages_data)
-        
+
         # Sort by created_at to maintain chronological order
         if not df.empty:
-            df['created_at'] = pd.to_datetime(df['created_at'])
-            df = df.sort_values('created_at')
-        
+            df["created_at"] = pd.to_datetime(df["created_at"])
+            df = df.sort_values("created_at")
+
         return df
 
     def list_models(self) -> List[str]:
         """
         List available models from the API.
-        
+
         :return: List of model names
         """
         response = self.client.models.list()
