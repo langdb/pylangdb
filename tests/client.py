@@ -77,9 +77,9 @@ class TestLangDb(unittest.TestCase):
         # Check that thread_id matches
         self.assertEqual(first_message.thread_id, self.thread_id)
 
-    def test_get_cost(self):
-        # Test the get_cost method using thread_id from completion
-        cost = self.client.get_cost(thread_id=self.thread_id)
+    def test_get_usage(self):
+        # Test the get_usage method using thread_id from completion
+        cost = self.client.get_usage(thread_id=self.thread_id)
 
         # Check return type
         self.assertIsInstance(cost, ThreadCost)
