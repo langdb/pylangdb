@@ -28,13 +28,17 @@ class LangDb:
 
     """
 
-    def __init__(self, api_key: str, project_id: str | None = None):
+    def __init__(self, api_key: str, project_id: str | None = None, base_url=None):
         self.api_key = api_key
         self.project_id = project_id
-        if project_id:
-            api_base = f"https://api.us-east-1.langdb.ai/{project_id}/v1"
+        if base_url:
+            base_url = base_url
         else:
-            api_base = "https://api.us-east-1.langdb.ai/v1"
+            base_url = DEFAULT_SERVER_URL
+        if project_id:
+            api_base = f"{base_url}/{project_id}/v1"
+        else:
+            api_base = f"{base_url}/v1"
 
         self.client = OpenAI(api_key=api_key, base_url=api_base)
 
