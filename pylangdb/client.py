@@ -28,7 +28,7 @@ class LangDb:
 
     """
 
-    def __init__(self, api_key: str, project_id: str | None = None, base_url=None):
+    def __init__(self, api_key: str, project_id: str | None = None, base_url: str | None =None):
         self.api_key = api_key
         self.project_id = project_id
         if base_url:
