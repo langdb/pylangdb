@@ -46,12 +46,24 @@ class LangDb:
         self,
         model: str,
         messages: List[Dict[str, str]],
-        headers: Any = None,
-        extra_body: Any = None,
-        temperature: float = 0.7,
-        max_tokens: int = 1000,
-        thread_id: str = None,
-    ):
+        headers: Dict[str, Any] | None = None,
+        extra_body: Dict[str, Any] | None = None,
+        thread_id: str | None = None,
+        **kwargs
+    ) -> Dict[str, str]:
+        """Create a completion using the LangDB API.
+
+        Args:
+            model: The model to use for completion
+            messages: List of message dictionaries with role and content
+            headers: Optional additional headers to send
+            extra_body: Optional additional body parameters like external model providers
+            thread_id: Optional thread ID for conversation tracking
+            **kwargs: Additional parameters to pass to the OpenAI chat completion API (e.g. temperature, max_tokens)
+
+        Returns:
+            Dictionary containing completion content and thread ID
+        """
         if headers is None:
             headers = {}
 
@@ -61,13 +73,13 @@ class LangDb:
 
         headers["x-thread-id"] = thread_id
 
+        # Create completion request
         response = self.client.chat.completions.create(
-            model=model,  # Use the model
-            messages=messages,  # Define the interaction
-            temperature=temperature,  # Control the creativity of the response
-            max_tokens=max_tokens,  # Limit the length of the response
+            model=model,
+            messages=messages,
             extra_headers=headers,
             extra_body=extra_body,
+            **kwargs
         )
         return {
             "content": response.choices[0].message.content.strip(),
@@ -91,7 +103,7 @@ class LangDb:
         if not self.project_id:
             raise ValueError("project_id is required for analytics operations")
 
-        url = f"{DEFAULT_SERVER_URL}/analytics/summary"
+        url = f"{self.base_url}/analytics/summary"
 
         # Set default end time to current time if not provided
         if end_time_us is None:
@@ -172,7 +184,7 @@ class LangDb:
         if not self.project_id:
             raise ValueError("project_id is required for thread operations")
 
-        url = f"{DEFAULT_SERVER_URL}/threads/{thread_id}/messages"
+        url = f"{self.base_url}/threads/{thread_id}/messages"
 
         headers = {
             "x-project-id": self.project_id,
@@ -195,7 +207,7 @@ class LangDb:
         if not self.project_id:
             raise ValueError("project_id is required for thread operations")
 
-        url = f"{DEFAULT_SERVER_URL}/threads/{thread_id}/cost"
+        url = f"{self.base_url}/threads/{thread_id}/cost"
 
         headers = {
             "x-project-id": self.project_id,
