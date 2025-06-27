@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pylangdb
-Version: 0.3.1
+Version: 0.3.3
 Summary: Multi-Framework AI Agent Tracing and Client. Instrument, trace, and analyze agents and LLMs across Google ADK, OpenAI, LangChain, CrewAI, and Agno with seamless distributed tracing and analytics.
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
