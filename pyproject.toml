@@ -1,7 +1,7 @@
 [project]
 name = "pylangdb"
 version = "0.2.6"
-description = "Comprehensive Google ADK integration package for LangDB with enhanced agents, LLM integration, and distributed tracing."
+description = "Multi-Framework AI Agent Tracing and Client. Instrument, trace, and analyze agents and LLMs across Google ADK, OpenAI, LangChain, CrewAI, and Agno with seamless distributed tracing and analytics."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -14,22 +14,22 @@ dependencies = [
 [project.optional-dependencies]
 # Client library extras
 adk = [
-    "google-adk>=1.3.0",
+    "google-adk>=1.5.0",
 ]
 agno = [
     "agno>=1.7.0",
-    "openinference-instrumentation-agno>=0.1.14",
+    "openinference-instrumentation-agno>=0.1.7",
 ]
 crewai = [
-    "openinference-instrumentation-crewai>=0.1.14",
+    "openinference-instrumentation-crewai>=0.1.1",
     "litellm>=1.73.2",
 ]
 langchain = [
-    "openinference-instrumentation-langchain>=0.1.14",
+    "openinference-instrumentation-langchain>=0.1.43",
 ]
 openai = [
     "openai>=1.60.2",
-    "opentelemetry-instrumentation-openai-agents>=0.1.14",
+    "openinference-instrumentation-openai-agents>=0.1.14",
 ]
 client = [
     "pandas>=2.2.2",
@@ -40,11 +40,11 @@ client = [
 # All dependencies
 all = [
     "agno>=1.7.0",
-    "google-adk>=1.3.0",
+    "google-adk>=1.5.0",
     "litellm>=1.73.2",
     "openai>=1.60.2",
-    "opentelemetry-instrumentation-openai-agents>=0.1.14",
-    "openinference-instrumentation-agno>=0.1.14",
-    "openinference-instrumentation-crewai>=0.1.14",
-    "openinference-instrumentation-langchain>=0.1.14",
+    "openinference-instrumentation-openai-agents>=0.1.14",
+    "openinference-instrumentation-agno>=0.1.7",
+    "openinference-instrumentation-crewai>=0.1.1",
+    "openinference-instrumentation-langchain>=0.1.43",
 ]
