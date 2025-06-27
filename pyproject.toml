@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["pylangdb"]
+packages = ["pylangdb", "pylangdb.agno", "pylangdb.crewai", "pylangdb.langchain", "pylangdb.openai", "pylangdb.client", "pylangdb.adk"]
 
 [project]
 name = "pylangdb"
-version = "0.3.3"
+version = "0.3.4"
 description = "Multi-Framework AI Agent Tracing and Client. Instrument, trace, and analyze agents and LLMs across Google ADK, OpenAI, LangChain, CrewAI, and Agno with seamless distributed tracing and analytics."
 readme = "README.md"
 requires-python = ">=3.10"
