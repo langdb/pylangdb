@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: pylangdb
-Version: 0.3.0
-Summary: Comprehensive integration package for LangDB with enhanced agents, LLM integration, and distributed tracing.
+Version: 0.3.1
+Summary: Multi-Framework AI Agent Tracing and Client. Instrument, trace, and analyze agents and LLMs across Google ADK, OpenAI, LangChain, CrewAI, and Agno with seamless distributed tracing and analytics.
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
@@ -10,7 +10,7 @@ Requires-Dist: opentelemetry-sdk>=1.18.0
 Requires-Dist: opentelemetry-exporter-otlp>=1.18.0
 Requires-Dist: uuid>=1.0.0
 Provides-Extra: adk
-Requires-Dist: google-adk>=1.3.0; extra == "adk"
+Requires-Dist: google-adk>=1.5.0; extra == "adk"
 Provides-Extra: agno
 Requires-Dist: agno>=1.7.0; extra == "agno"
 Requires-Dist: openinference-instrumentation-agno>=0.1.7; extra == "agno"
@@ -54,7 +54,7 @@ pip install pylangdb[adk]
 # Import and initialize LangDB tracing
 from pylangdb.adk import init
 
-# Monkey-patch the client for tracing
+# Initialize tracing and Agent for Google ADK
 init()
 
 # Now import and use your agents as usual
@@ -90,7 +90,7 @@ root_agent = Agent(
 
 #### Example Trace Screenshot
 
-![Google ADK Trace Example](assets/adk.png)
+![Google ADK Trace Example](https://raw.githubusercontent.com/langdb/pylangdb/main/assets/adk.png)
 
 ## 🛠️ Supported Frameworks (Tracing)
 

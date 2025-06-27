@@ -7,7 +7,7 @@ packages = ["pylangdb"]
 
 [project]
 name = "pylangdb"
-version = "0.2.6"
+version = "0.3.1"
 description = "Multi-Framework AI Agent Tracing and Client. Instrument, trace, and analyze agents and LLMs across Google ADK, OpenAI, LangChain, CrewAI, and Agno with seamless distributed tracing and analytics."
 readme = "README.md"
 requires-python = ">=3.10"
