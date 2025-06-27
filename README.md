@@ -14,7 +14,7 @@ pip install pylangdb[adk]
 # Import and initialize LangDB tracing
 from pylangdb.adk import init
 
-# Monkey-patch the client for tracing
+# Initialize tracing and Agent for Google ADK
 init()
 
 # Now import and use your agents as usual
@@ -50,7 +50,7 @@ root_agent = Agent(
 
 #### Example Trace Screenshot
 
-![Google ADK Trace Example](assets/adk.png)
+![Google ADK Trace Example](https://raw.githubusercontent.com/langdb/pylangdb/main/assets/adk.png)
 
 ## 🛠️ Supported Frameworks (Tracing)
 
