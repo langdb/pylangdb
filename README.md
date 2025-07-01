@@ -12,36 +12,32 @@ pip install pylangdb[adk]
 
 ```python
 # Import and initialize LangDB tracing
+# First initialize LangDB before defining any agents
 from pylangdb.adk import init
-
-# Initialize tracing and Agent for Google ADK
 init()
 
-# Now import and use your agents as usual
+import datetime
+from zoneinfo import ZoneInfo
 from google.adk.agents import Agent
-from travel_concierge.sub_agents.booking.agent import booking_agent
-from travel_concierge.sub_agents.in_trip.agent import in_trip_agent
-from travel_concierge.sub_agents.inspiration.agent import inspiration_agent
-from travel_concierge.sub_agents.planning.agent import planning_agent
-from travel_concierge.sub_agents.post_trip.agent import post_trip_agent
-from travel_concierge.sub_agents.pre_trip.agent import pre_trip_agent
-from travel_concierge.tools.memory import _load_precreated_itinerary
 
+def get_weather(city: str) -> dict:
+    if city.lower() != "new york":
+        return {"status": "error", "error_message": f"Weather information for '{city}' is not available."}
+    return {"status": "success", "report": "The weather in New York is sunny with a temperature of 25 degrees Celsius (77 degrees Fahrenheit)."}
+
+def get_current_time(city: str) -> dict:
+    if city.lower() != "new york":
+        return {"status": "error", "error_message": f"Sorry, I don't have timezone information for {city}."}
+    tz = ZoneInfo("America/New_York")
+    now = datetime.datetime.now(tz)
+    return {"status": "success", "report": f'The current time in {city} is {now.strftime("%Y-%m-%d %H:%M:%S %Z%z")}'}
 
 root_agent = Agent(
-    model="openai/gpt-4.1",
-    name="root_agent",
-    description="A Travel Conceirge using the services of multiple sub-agents",
-    instruction="Instruct the travel concierge to plan a trip for the user.",
-    sub_agents=[
-        inspiration_agent,
-        planning_agent,
-        booking_agent,
-        pre_trip_agent,
-        in_trip_agent,
-        post_trip_agent,
-    ],
-    before_agent_callback=_load_precreated_itinerary,
+    name="weather_time_agent",
+    model="gemini-2.0-flash",
+    description=("Agent to answer questions about the time and weather in a city." ),
+    instruction=("You are a helpful agent who can answer user questions about the time and weather in a city."),
+    tools=[get_weather, get_current_time],
 )
 ```
 
@@ -272,16 +268,27 @@ class CustomModelProvider(ModelProvider):
 
 CUSTOM_MODEL_PROVIDER = CustomModelProvider()
 
-# Use the model provider with a unique group_id for tracing
-group_id = str(uuid.uuid4())
-response = await Runner.run(
-    agent, 
-    input="Hello, world!",
-    run_config=RunConfig(model_provider=CUSTOM_MODEL_PROVIDER, group_id=group_id)
+agent = Agent(
+    name="Math Tutor",
+    model="gpt-4.1",
+    instruction="You are a math tutor who can help students with their math homework.",
 )
-        run_config=RunConfig(model_provider=CUSTOM_MODEL_PROVIDER, group_id=group_id)
+
+group_id = str(uuid.uuid4())
+# Use the model provider with a unique group_id for tracing
+async def run_agent():
+    response = await Runner.run(
+        triage_agent,
+        input="Hello World",
+        run_config=RunConfig(
+            model_provider=CUSTOM_MODEL_PROVIDER,  # Inject custom model provider
+            group_id=group_id                      # Link all steps to the same trace
+        )
     )
-    return response
+    print(response.final_output)
+
+# Run the async function with asyncio
+asyncio.run(run_agent())
 ```
 
 ### LangChain
@@ -290,7 +297,6 @@ response = await Runner.run(
 import os
 from pylangdb.langchain import init
 
-# Monkey-patch the client for tracing
 init()
 
 # Get environment variables for configuration
@@ -415,7 +421,7 @@ response = agent.run("What is LangDB?")
 | `LANGDB_API_BASE_URL` | LangDB API base URL | `https://api.us-east-1.langdb.ai` |
 | `LANGDB_TRACING_BASE_URL` | Tracing collector endpoint | `https://api.us-east-1.langdb.ai:4317` |
 | `LANGDB_TRACING` | Enable/disable tracing | `true` |
-| `LANGDB_TRACING_EXPORTERS` | Comma-separated list of exporters | `otlp` |
+| `LANGDB_TRACING_EXPORTERS` | Comma-separated list of exporters | `otlp`, `console` |
 
 ### Custom Configuration
 
@@ -425,9 +431,9 @@ All `init()` functions accept the same optional parameters:
 from langdb.openai import init
 
 init(
-    collector_endpoint="https://custom-collector.example.com:4317",
-    api_key="custom-api-key",
-    project_id="custom-project-id"
+    collector_endpoint='https://api.us-east-1.langdb.ai:4317',
+    api_key="langdb-api-key",
+    project_id="langdb-project-id"
 )
 ```
 

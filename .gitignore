@@ -5,3 +5,4 @@ dist/
 .venv
 *.csv
 *.txt
+pylangdb.egg-info
