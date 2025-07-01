@@ -302,7 +302,9 @@ if not api_key:
 project_id = os.getenv("LANGDB_PROJECT_ID")
 
 # Default headers for API requests
-default_headers: dict[str, str] = {}
+default_headers: dict[str, str] = {
+    "x-project-id": project-id
+}
 
 # Your existing LangChain code works with proper configuration
 from langchain.chat_models import ChatOpenAI
