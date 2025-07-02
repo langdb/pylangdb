@@ -55,7 +55,6 @@ def on_span_start(self, span: Span[any]):
 
     self._otel_spans[span.span_id].set_attribute("langdb.thread_id", group_id)
     self._otel_spans[span.span_id].set_attribute("langdb.run_id", group_id)
-    self._otel_spans[span.span_id].set_attribute("langdb.duhas", group_id)
 
 def on_trace_start(self, trace: Trace):
     original_on_trace_start(self, trace)
@@ -66,7 +65,6 @@ def on_trace_start(self, trace: Trace):
 
     self._root_spans[trace.trace_id].set_attribute("langdb.thread_id", group_id)
     self._root_spans[trace.trace_id].set_attribute("langdb.run_id", group_id)
-    self._root_spans[trace.trace_id].set_attribute("langdb.duhas", group_id)
 
 def init(collector_endpoint: Optional[str] = None, api_key: Optional[str] = None, project_id: Optional[str] = None):
     tracer = LangDBTracing(collector_endpoint, api_key, project_id, "openai")
