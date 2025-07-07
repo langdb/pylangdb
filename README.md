@@ -3,7 +3,38 @@
 [![PyPI version](https://badge.fury.io/py/pylangdb.svg)](https://badge.fury.io/py/pylangdb)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## ⚡ Quick Start
+## Key Features
+
+LangDB exposes **two complementary capabilities**:
+
+1. **Chat Completions Client** – Call LLMs using the `LangDb` Python client. This works as a drop-in replacement for `openai.ChatCompletion` while adding automatic usage, cost and latency reporting.
+2. **Agent Tracing** – Instrument your existing AI framework (ADK, LangChain, CrewAI, etc.) with a single `init()` call. All calls are routed through the LangDB collector and are enriched with additional metadata regarding the framework is visible on the LangDB dashboard.
+
+---
+
+## ⚡ Quick Start (Chat Completions)
+
+```bash
+pip install pylangdb[client]
+```
+
+```python
+from pylangdb.client import LangDb
+
+# Initialize LangDB client
+client = LangDb(api_key="your_api_key", project_id="your_project_id")
+
+# Simple chat completion
+resp = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+print(resp.choices[0].message.content)
+```
+
+---
+
+## 🚀 Agent Tracing Quick Start
 
 ```bash
 # Install the package with Google ADK support
@@ -186,6 +217,18 @@ df = client.get_analytics_dataframe(
     start_time_us=None,
     end_time_us=None
 )
+```
+
+### Evaluate Multiple Threads
+```python
+df = client.create_evaluation_df(thread_ids=["thread1", "thread2"])
+print(df.head())
+```
+
+### List Available Models
+```python
+models = client.list_models()
+print(models)
 ```
 
 ## 🧩 Framework-Specific Examples (Tracing)

@@ -6,3 +6,5 @@ dist/
 *.csv
 *.txt
 pylangdb.egg-info
+build/
+__pycache__

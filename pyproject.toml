@@ -7,7 +7,7 @@ packages = ["pylangdb", "pylangdb.agno", "pylangdb.crewai", "pylangdb.langchain"
 
 [project]
 name = "pylangdb"
-version = "0.3.4"
+version = "0.3.5"
 description = "Comprehensive LangDB integration package with enhanced agent support, LLM integration, and distributed tracing."
 readme = "README.md"
 requires-python = ">=3.10"
